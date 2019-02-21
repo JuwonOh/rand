@@ -37,13 +37,14 @@ def parse_report(url):
         for a in soup.select('a'):
             if '/content/dam/rand/' in a.attrs.get('href', ''):
                 return a.attrs['href']
-            if 'doi.org' in a.attrs.get('href', ''):
+            if 'external' in a.attrs.get('class', ''):
                 return 'external article'
 
     soup = get_soup(url)
     temp_content_url = parse_publication_link(soup)
-    if 'https:' not in temp_content_url:
-        content_url = 'https://www.rand.org' + temp_content_url
+    if '/content/dam/rand/' in temp_content_url:
+        if 'https:' not in temp_content_url:
+            content_url = 'https://www.rand.org' + temp_content_url
     else:
         content_url = temp_content_url
     return {
