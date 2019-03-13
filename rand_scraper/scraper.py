@@ -3,10 +3,7 @@ import time
 from datetime import datetime
 from .parser import parse_page
 from .utils import get_soup
-from .utils import blog_dateformat
-from .utils import user_dateformat
-from .utils import report_dateformat
-from .utils import strf_to_datetime
+from dateutil.parser import parse
 
 def is_matched(url):
     for pattern in patterns:
@@ -38,7 +35,7 @@ def yield_latest_report(begin_date, max_num=10, sleep=1.0):
     """
 
     # prepare parameters
-    d_begin = strf_to_datetime(begin_date, user_dateformat)
+    d_begin = parse(begin_date)
     end_page = 72
     n_news = 0
     outdate = False
@@ -64,10 +61,7 @@ def yield_latest_report(begin_date, max_num=10, sleep=1.0):
             news_json = parse_page(url)
 
             # check date
-            if '/pub' in url:
-                d_news = strf_to_datetime(news_json['date'], report_dateformat)
-            elif 'blog' in url:
-                d_news = strf_to_datetime(news_json['date'], blog_dateformat)
+            d_news = news_json['date']
 
             if d_begin > d_news:
                 outdate = True
@@ -81,7 +75,7 @@ def yield_latest_report(begin_date, max_num=10, sleep=1.0):
             n_news += 1
             if n_news >= max_num:
                 break
-            time.sleep(sleep)
+            time.sleep(5)
 
 def get_report_urls(begin_page=0, end_page=3, verbose=True):
     """
@@ -132,7 +126,7 @@ def yield_latest_blog(begin_date, max_num=10, sleep=1.0):
     """
 
     # prepare parameters
-    d_begin = strf_to_datetime(begin_date, user_dateformat)
+    d_begin = parse(begin_date)
     end_page = 72
     n_news = 0
     outdate = False
@@ -159,12 +153,11 @@ def yield_latest_blog(begin_date, max_num=10, sleep=1.0):
         links = list(reversed(links_all))
         for url in links:
             news_json = parse_page(url)
+            if None == news_json:
+                return None
 
             # check date
-            if '/pub' in url:
-                d_news = strf_to_datetime(news_json['date'], report_dateformat)
-            elif '/blog/' in url:
-                d_news = strf_to_datetime(news_json['date'], blog_dateformat)
+            d_news = news_json['date']
 
             if d_begin > d_news:
                 outdate = True
@@ -179,7 +172,7 @@ def yield_latest_blog(begin_date, max_num=10, sleep=1.0):
             n_news += 1
             if n_news >= max_num:
                 break
-            time.sleep(sleep)
+            time.sleep(5)
 
 def get_blog_urls(verbose=True):
     """

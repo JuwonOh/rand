@@ -1,37 +1,59 @@
 from .utils import get_soup
 from .utils import now
+from dateutil.parser import parse
 
 def parse_page(url):
-    if '/pub' in url:
-        return parse_report(url)
-    if '/blog/' in url:
-        return parse_blog(url)
-    return None
+    """
+    Argument
+    --------
+    url : str
+        Web page url
+
+    Returns
+    -------
+    json_object : dict
+        JSON format web page contents
+        It consists with
+            title : article title
+            time : article written time
+            content : text with line separator \\n
+            url : web page url
+            scrap_time : scrapped time
+    """
+    try:
+        if '/pub' in url:
+            return parse_report(url)
+        if '/blog/' in url:
+            return parse_blog(url)
+    except Exception as e:
+        print(e)
+        print('Parsing error from {}'.format(url))
+        return None
 
 def parse_report(url):
     def parse_author(soup):
-        author = soup.find('p', class_='authors').text
+        author = soup.find('p', class_='authors')
         if not author:
-            return ''
-        return author
+            return 'no author'
+        return author.text
 
     def parse_title(soup):
-        title = soup.find('h1', id='RANDTitleHeadingId').text
+        title = soup.find('h1', id='RANDTitleHeadingId')
         if not title:
             return ''
-        return title
+        return title.text
 
     def parse_date(soup):
         date = soup.find('meta',attrs={'name':"rand-date"})['content']
         if not date:
-            return ''
-        return date
+            return '20190306'
+        return parse(date)
 
     def parse_content(soup):
-        content = soup.find('div', class_= 'product-main').text
+        content = soup.find('div', class_= 'product-main')
         if not content:
             return ''
-        return content
+        return content.text
 
     def parse_publication_link(soup):
         for a in soup.select('a'):
@@ -53,39 +75,40 @@ def parse_report(url):
         'date': parse_date(soup),
         'author': parse_author(soup),
         'abstract': parse_content(soup),
-        'content_url': content_url
+        'content_url': content_url,
+        'scraping_time': now()
     }
 
 def parse_blog(url):
     def parse_author(soup):
-        author = soup.find('p', class_='authors').text
+        author = soup.find('p', class_='authors')
         if not author:
             return 'no name'
-        return author
+        return author.text
 
     def parse_title(soup):
-        title = soup.find('h1', id='RANDTitleHeadingId').text
+        title = soup.find('h1', id='RANDTitleHeadingId')
         if not title:
             return ''
-        return title
+        return title.text
 
     def parse_date(soup):
         date = soup.find('p', class_= 'date')
         if not date:
-            return ''
-        return date.text
+            return '20190306'
+        return parse(date.text)
 
     def parse_content(soup):
-        content = soup.find('div', class_= 'body-text').text
+        content = soup.find('div', class_= 'body-text')
         if not content:
             return ''
-        return content
+        return content.text
 
     def parse_category(soup):
-        blog_category = soup.find('p', class_='type').text
+        blog_category = soup.find('p', class_='type')
         if not blog_category:
             return ''
-        return blog_category
+        return blog_category.text
 
     soup = get_soup(url)
 
@@ -95,5 +118,6 @@ def parse_blog(url):
         'date': parse_date(soup),
         'author': parse_author(soup),
         'content': parse_content(soup),
-        'blog_category': parse_category(soup)
+        'blog_category': parse_category(soup),
+        'scraping_time': now()
     }
